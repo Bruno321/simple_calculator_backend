@@ -8,14 +8,23 @@ import (
 
 	"simple_calculator/internal/domain"
 	"simple_calculator/internal/model"
-	"simple_calculator/internal/service"
 )
 
-type Handler struct {
-	calculator *service.Calculator
+// Calculator defines the service behavior required by the HTTP transport.
+type Calculator interface {
+	Add([]float64) (float64, error)
+	Multiply([]float64) (float64, error)
+	Divide([]float64) (float64, error)
+	Exponentiate(float64, float64) (float64, error)
+	SquareRoot(float64) (float64, error)
+	Percentage(float64, float64) (float64, error)
 }
 
-func NewHandler(calculator *service.Calculator) *Handler {
+type Handler struct {
+	calculator Calculator
+}
+
+func NewHandler(calculator Calculator) *Handler {
 	return &Handler{calculator: calculator}
 }
 

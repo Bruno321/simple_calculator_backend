@@ -1,12 +1,8 @@
 package http
 
-import (
-	stdhttp "net/http"
+import stdhttp "net/http"
 
-	"simple_calculator/internal/service"
-)
-
-func NewRouter(calculator *service.Calculator) stdhttp.Handler {
+func NewRouter(calculator Calculator) stdhttp.Handler {
 	handler := NewHandler(calculator)
 	mux := stdhttp.NewServeMux()
 	mux.HandleFunc("/addition", postOnly(handler.addition))

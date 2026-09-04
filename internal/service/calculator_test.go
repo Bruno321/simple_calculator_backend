@@ -151,11 +151,22 @@ func TestPercentage(t *testing.T) {
 
 func TestRejectsNonFiniteInputs(t *testing.T) {
 	calculator := NewCalculator()
-	if _, err := calculator.Add([]float64{1, math.NaN()}); !errors.Is(err, domain.ErrNonFiniteInput) {
-		t.Fatalf("Add() error = %v, want %v", err, domain.ErrNonFiniteInput)
+	tests := []struct {
+		name      string
+		calculate func() (float64, error)
+	}{
+		{"addition", func() (float64, error) { return calculator.Add([]float64{1, math.NaN()}) }},
+		{"multiplication", func() (float64, error) { return calculator.Multiply([]float64{1, math.Inf(1)}) }},
+		{"division", func() (float64, error) { return calculator.Divide([]float64{1, math.Inf(-1)}) }},
+		{"square root", func() (float64, error) { return calculator.SquareRoot(math.Inf(1)) }},
 	}
-	if _, err := calculator.SquareRoot(math.Inf(1)); !errors.Is(err, domain.ErrNonFiniteInput) {
-		t.Fatalf("SquareRoot() error = %v, want %v", err, domain.ErrNonFiniteInput)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := test.calculate(); !errors.Is(err, domain.ErrNonFiniteInput) {
+				t.Fatalf("error = %v, want %v", err, domain.ErrNonFiniteInput)
+			}
+		})
 	}
 }
 
