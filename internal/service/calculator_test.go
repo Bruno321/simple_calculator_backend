@@ -70,6 +70,7 @@ func TestDivide(t *testing.T) {
 		{"zero middle divisor", []float64{10, 0, 4}, 0, domain.ErrDivisionByZero},
 		{"zero final divisor", []float64{10, 4, 0}, 0, domain.ErrDivisionByZero},
 		{"one operand", []float64{1}, 0, domain.ErrInsufficientOperands},
+		{"overflow", []float64{math.MaxFloat64, 0.5}, 0, domain.ErrNonRepresentableResult},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -93,6 +94,8 @@ func TestExponentiate(t *testing.T) {
 		{"zero", 0, 2, 0, nil},
 		{"NaN result", -2, 0.5, 0, domain.ErrNoRealResult},
 		{"infinite result", 10, 309, 0, domain.ErrNonRepresentableResult},
+		{"non-finite base", math.Inf(1), 2, 0, domain.ErrNonFiniteInput},
+		{"non-finite exponent", 2, math.NaN(), 0, domain.ErrNonFiniteInput},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -135,6 +138,8 @@ func TestPercentage(t *testing.T) {
 		{"negative", 100, -10, -10, nil},
 		{"zero", 100, 0, 0, nil},
 		{"overflow", math.MaxFloat64, 200, 0, domain.ErrNonRepresentableResult},
+		{"non-finite value", math.Inf(1), 10, 0, domain.ErrNonFiniteInput},
+		{"non-finite percentage", 100, math.NaN(), 0, domain.ErrNonFiniteInput},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
