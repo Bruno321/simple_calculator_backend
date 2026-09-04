@@ -56,6 +56,7 @@ Every endpoint accepts `POST` requests with JSON and returns either `{"result": 
 | Endpoint | Example payload |
 | --- | --- |
 | `/addition` | `{"operands":[10,4,2]}` |
+| `/subtraction` | `{"operands":[10,4,2]}` |
 | `/multiplication` | `{"operands":[10,4,2]}` |
 | `/division` | `{"operands":[10,4,2]}` |
 | `/exponentiation` | `{"base":10,"exponent":2}` |
@@ -82,7 +83,7 @@ Here is how I would document our **Architecture Decisions and Assumptions**:
 
 - The API is intentionally designed around individual calculator operations rather than accepting arbitrary mathematical expressions.
 
-- For operations that naturally support an arbitrary number of values — addition, multiplication, and division — we use an `operands` array:
+- For operations that naturally support an arbitrary number of values — addition, subtraction, multiplication, and division — we use an `operands` array:
 
 ```json
 {
@@ -107,6 +108,9 @@ For example:
 
 Addition:
 (10 + 4) + 2
+
+Subtraction:
+(10 - 4) - 2
 
 Multiplication:
 (10 * 4) * 2
@@ -185,6 +189,7 @@ Parser / Evaluator
     ↓
 Calculator Service
     ├── Add
+    ├── Subtract
     ├── Multiply
     ├── Divide
     ├── Exponentiate
@@ -333,6 +338,7 @@ For example:
 
 ```text
 Add
+Subtract
 Multiply
 Divide
 Exponentiate

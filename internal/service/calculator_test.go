@@ -32,6 +32,31 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestSubtract(t *testing.T) {
+	calculator := NewCalculator()
+	tests := []struct {
+		name     string
+		operands []float64
+		want     float64
+		wantErr  error
+	}{
+		{"left to right", []float64{10, 4, 2}, 4, nil},
+		{"decimals", []float64{7.5, 2.25}, 5.25, nil},
+		{"negative", []float64{-5, 2}, -7, nil},
+		{"subtract negative", []float64{5, -2}, 7, nil},
+		{"zero", []float64{0, 0}, 0, nil},
+		{"missing operands", nil, 0, domain.ErrInsufficientOperands},
+		{"one operand", []float64{1}, 0, domain.ErrInsufficientOperands},
+		{"overflow", []float64{-math.MaxFloat64, math.MaxFloat64}, 0, domain.ErrNonRepresentableResult},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := calculator.Subtract(test.operands)
+			assertResult(t, got, err, test.want, test.wantErr)
+		})
+	}
+}
+
 func TestMultiply(t *testing.T) {
 	calculator := NewCalculator()
 	tests := []struct {
@@ -156,6 +181,7 @@ func TestRejectsNonFiniteInputs(t *testing.T) {
 		calculate func() (float64, error)
 	}{
 		{"addition", func() (float64, error) { return calculator.Add([]float64{1, math.NaN()}) }},
+		{"subtraction", func() (float64, error) { return calculator.Subtract([]float64{1, math.NaN()}) }},
 		{"multiplication", func() (float64, error) { return calculator.Multiply([]float64{1, math.Inf(1)}) }},
 		{"division", func() (float64, error) { return calculator.Divide([]float64{1, math.Inf(-1)}) }},
 		{"square root", func() (float64, error) { return calculator.SquareRoot(math.Inf(1)) }},

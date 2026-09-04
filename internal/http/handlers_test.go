@@ -21,6 +21,7 @@ func TestCalculatorEndpoints(t *testing.T) {
 		wantCall   string
 	}{
 		{"addition", "/addition", `{"operands":[10,4,2]}`, nil, 200, `{"result":42}` + "\n", "addition"},
+		{"subtraction", "/subtraction", `{"operands":[10,4,2]}`, nil, 200, `{"result":42}` + "\n", "subtraction"},
 		{"multiplication", "/multiplication", `{"operands":[1.5,4]}`, nil, 200, `{"result":42}` + "\n", "multiplication"},
 		{"division", "/division", `{"operands":[10,4,2]}`, nil, 200, `{"result":42}` + "\n", "division"},
 		{"exponentiation", "/exponentiation", `{"base":10,"exponent":2}`, nil, 200, `{"result":42}` + "\n", "exponentiation"},
@@ -42,6 +43,7 @@ func TestCalculatorEndpoints(t *testing.T) {
 		{"unknown field", "/square-root", `{"radicand":25,"extra":1}`, nil, 400, `{"error":"invalid JSON"}` + "\n", ""},
 		{"one operand", "/multiplication", `{"operands":[2]}`, domain.ErrInsufficientOperands, 400, `{"error":"at least two operands are required"}` + "\n", "multiplication"},
 		{"empty operands", "/addition", `{"operands":[]}`, domain.ErrInsufficientOperands, 400, `{"error":"at least two operands are required"}` + "\n", "addition"},
+		{"one subtraction operand", "/subtraction", `{"operands":[2]}`, domain.ErrInsufficientOperands, 400, `{"error":"at least two operands are required"}` + "\n", "subtraction"},
 		{"division by zero service error", "/division", `{"operands":[10,2]}`, domain.ErrDivisionByZero, 400, `{"error":"division by zero"}` + "\n", "division"},
 		{"negative square root service error", "/square-root", `{"radicand":4}`, domain.ErrNegativeRadicand, 400, `{"error":"square root of a negative number has no real result"}` + "\n", "square-root"},
 		{"no real exponentiation result", "/exponentiation", `{"base":2,"exponent":2}`, domain.ErrNoRealResult, 400, `{"error":"calculation has no real-number result"}` + "\n", "exponentiation"},
@@ -125,6 +127,10 @@ type stubCalculator struct {
 
 func (s *stubCalculator) Add([]float64) (float64, error) {
 	return s.respond("addition")
+}
+
+func (s *stubCalculator) Subtract([]float64) (float64, error) {
+	return s.respond("subtraction")
 }
 
 func (s *stubCalculator) Multiply([]float64) (float64, error) {

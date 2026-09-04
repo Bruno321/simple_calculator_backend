@@ -6,6 +6,7 @@ func NewRouter(calculator Calculator) stdhttp.Handler {
 	handler := NewHandler(calculator)
 	mux := stdhttp.NewServeMux()
 	mux.HandleFunc("/addition", postOnly(handler.addition))
+	mux.HandleFunc("/subtraction", postOnly(handler.subtraction))
 	mux.HandleFunc("/multiplication", postOnly(handler.multiplication))
 	mux.HandleFunc("/division", postOnly(handler.division))
 	mux.HandleFunc("/exponentiation", postOnly(handler.exponentiation))

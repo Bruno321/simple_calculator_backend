@@ -28,6 +28,21 @@ func (c *Calculator) Add(operands []float64) (float64, error) {
 	return result, nil
 }
 
+func (c *Calculator) Subtract(operands []float64) (float64, error) {
+	if err := validateOperands(operands); err != nil {
+		return 0, err
+	}
+
+	result := operands[0]
+	for _, operand := range operands[1:] {
+		result -= operand
+		if !isFinite(result) {
+			return 0, domain.ErrNonRepresentableResult
+		}
+	}
+	return result, nil
+}
+
 func (c *Calculator) Multiply(operands []float64) (float64, error) {
 	if err := validateOperands(operands); err != nil {
 		return 0, err

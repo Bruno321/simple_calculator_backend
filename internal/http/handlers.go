@@ -13,6 +13,7 @@ import (
 // Calculator defines the service behavior required by the HTTP transport.
 type Calculator interface {
 	Add([]float64) (float64, error)
+	Subtract([]float64) (float64, error)
 	Multiply([]float64) (float64, error)
 	Divide([]float64) (float64, error)
 	Exponentiate(float64, float64) (float64, error)
@@ -31,6 +32,12 @@ func NewHandler(calculator Calculator) *Handler {
 func (h *Handler) addition(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 	handleJSON(w, r, validateOperandsRequest, func(request model.OperandRequest) (float64, error) {
 		return h.calculator.Add(operandValues(request))
+	})
+}
+
+func (h *Handler) subtraction(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	handleJSON(w, r, validateOperandsRequest, func(request model.OperandRequest) (float64, error) {
+		return h.calculator.Subtract(operandValues(request))
 	})
 }
 
