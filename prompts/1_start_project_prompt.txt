@@ -1,0 +1,303 @@
+Create a small REST API in Go for a calculator service.
+
+Use only the Go standard library for HTTP handling (`net/http`).
+
+----------------------------------------------------------------------
+Architecture
+
+Use the following flow:
+
+HTTP request
+    ↓
+Handler
+    ↓
+Service
+    ↓
+Result
+    ↓
+Handler
+    ↓
+HTTP response
+
+Architecture requirements:
+- Handlers must be responsible only for HTTP concerns:
+  - decoding JSON
+  - validating request structure
+  - calling the service
+  - mapping errors to appropriate HTTP responses
+  - encoding JSON responses
+- Service layer
+  - The service layer must be completely agnostic about HTTP.
+  - The service layer must not receive `http.Request`, `http.ResponseWriter`, HTTP status codes, or any other HTTP-specific type.
+  - Mathematical/business logic must live in the service layer.
+- Keep domain/application errors separate from HTTP errors.
+- Organize the project so the HTTP layer could reasonably be replaced with another HTTP framework in the future without changing the calculator service logic.
+
+----------------------------------------------------------------------
+Project structure requirements
+
+├── cmd/
+│   └── api/
+│       └── main.go
+│
+├── internal/
+│   ├── http/
+│   │   ├── handlers.go
+│   │   ├── routes.go
+│   │   └── response.go
+│   │
+│   ├── service/
+│   │   ├── calculator.go
+│   │   └── calculator_test.go
+│   │
+│   ├── domain/
+│   │   └── errors.go
+│   │
+│   └── model/
+│       ├── requests.go
+│       └── responses.go
+│
+├── go.mod
+├── Dockerfile
+├── .dockerignore
+└── README.md
+
+----------------------------------------------------------------------
+Maintainability requirements:
+
+- Adding a new calculator operation should require changes only in the components directly related to that operation.
+- Do not duplicate shared behavior such as JSON decoding, JSON responses, or common validation patterns.
+- Keep functions small and focused on a single responsibility.
+- Use descriptive names that communicate intent.
+- Keep dependency direction explicit and one-way: HTTP layer -> service layer.
+- Avoid global mutable state.
+- Keep domain errors reusable and independent from HTTP.
+- Do not introduce abstractions, interfaces, or layers unless they provide a concrete benefit for separation, reuse, or testing.
+- Keep endpoint-specific logic isolated so changes to one endpoint do not unintentionally affect unrelated endpoints.
+
+----------------------------------------------------------------------
+Functional requirements
+
+All endpoints below:
+- must use POST
+- must accept JSON
+- must validate that all required keys are present
+- must validate that provided values are numeric
+- must reject invalid JSON with an appropriate 400 response
+- must return JSON responses
+- must validate that calculation results can be represented by the selected numeric type; otherwise return an appropriate error instead of returning NaN or infinity
+- For endpoints using
+{
+  "operands": [...]
+} 
+operations must be evaluated from left to right.
+
+Example:
+
+{
+  "operands": [10, 4, 2]
+}
+
+Addition:
+10 + 4 + 2
+
+Multiplication:
+10 * 4 * 2
+
+Division:
+(10 / 4) / 2
+
+----------------------------------------------------------------------
+Endpoints:
+
+POST /addition
+
+Payload:
+
+{
+  "operands": [10, 4, 2]
+}
+
+Requirements:
+- `operands` is mandatory
+- operands must contain numeric values
+- validate that the request contains enough operands to perform the operation
+
+POST /multiplication
+
+Payload:
+
+{
+  "operands": [10, 4, 2]
+}
+
+Requirements:
+- `operands` is mandatory
+- operands must contain numeric values
+- validate that the request contains enough operands to perform the operation
+
+
+POST /division
+
+Payload:
+
+{
+  "operands": [10, 4, 2]
+}
+
+Requirements:
+- `operands` is mandatory
+- operands must contain numeric values
+- evaluate values from left to right
+- the first operand may be zero
+- every operand after the first one represents a divisor and therefore must be non-zero
+
+Examples:
+
+[0, 10, 10] -> valid
+[10, 4, 0] -> invalid
+[10, 0, 4] -> invalid
+
+
+POST /exponentiation
+
+Payload:
+
+{
+  "base": 10,
+  "exponent": 2
+}
+
+Requirements:
+- `base` is mandatory
+- `exponent` is mandatory
+- both values must be real numeric values
+- positive and negative values are allowed when mathematically valid
+- return an error when the operation has no valid real-number result
+- validate the calculation result and return an error whenever it cannot be represented by the selected numeric type
+
+Examples of invalid/non-representable calculations:
+
+math.Pow(-2, 0.5)
+math.Pow(10, 309)
+
+
+POST /square-root
+
+Payload:
+
+{
+  "radicand": 25
+}
+
+Requirements:
+- `radicand` is mandatory
+- `radicand` must be a non-negative real number
+- negative radicands must return an appropriate error
+
+
+POST /percentage
+
+Payload:
+
+{
+  "value": 100,
+  "percentage": 10
+}
+
+Interpret this as:
+
+10% of 100 = 10
+
+Requirements:
+- `value` is mandatory
+- `percentage` is mandatory
+- both values must be finite real numbers
+- percentages may be negative or greater than 100
+- validate that the final result can be represented by the selected numeric type
+
+
+Response design
+
+Use a consistent JSON response format.
+
+Successful example:
+
+{
+  "result": 16
+}
+
+Error example:
+
+{
+  "error": "division by zero"
+}
+
+Use appropriate HTTP status codes:
+- 200 for successful calculations
+- 400 for malformed requests, missing fields, invalid numeric values, unsupported mathematical inputs, division by zero, or non-representable results
+- 405 when an endpoint is called with an unsupported HTTP method where applicable
+- 500 only for unexpected internal failures
+
+
+----------------------------------------------------------------------
+Testing
+
+Add unit tests for the calculator service.
+
+Cover:
+- normal calculations
+- decimal values
+- negative values where valid
+- zero
+- division by zero
+- negative square roots
+- exponentiation resulting in NaN
+- exponentiation resulting in infinity/out-of-range values
+- percentage values above 100
+- negative percentages
+- missing or insufficient operands
+
+Also add HTTP handler tests using `httptest`.
+
+Cover:
+- valid requests
+- malformed JSON
+- missing mandatory keys
+- wrong value types
+- unknown JSON fields
+- expected HTTP status codes
+- expected JSON response bodies
+
+----------------------------------------------------------------------
+
+Docker
+
+Dockerize the API.
+
+Requirements:
+- use a multi-stage Dockerfile
+- compile the Go application in a Go build image
+- use a minimal runtime image
+- do not require Go to be installed on the host machine to build/run the container
+- expose port 8080
+- run the service on port 8080
+
+README
+
+Add a concise README explaining:
+- project structure
+- how to run locally
+- how to run tests
+- how to build the Docker image
+- how to run the Docker container
+- API endpoints and example payloads
+
+Keep the implementation intentionally small and readable.
+
+Do not add features outside the requirements.
+Do not add a database.
+Do not add authentication.
+Do not add a third-party HTTP framework.
+Do not build an expression parser.
+Do not overengineer the solution.

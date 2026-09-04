@@ -1,0 +1,114 @@
+Review the current test suite and improve it based on the architectural testing decisions below.
+
+Do not change production behavior unless a real bug is discovered.
+
+1. Isolate handler tests from the real service
+
+Right now the HTTP tests instantiate the real calculator service with something like:
+
+router := NewRouter(service.NewCalculator())
+
+That means handler tests are also executing the real service implementation.
+
+This is valid as an integration-style test, but it does not fully follow the architecture decision we made:
+
+Handler tests should verify HTTP behavior independently from service behavior.
+
+The intended unit-test boundary is:
+
+HTTP request
+↓
+Handler
+↓
+Mock / Stub Calculator Service
+↓
+HTTP response
+
+The reason is that if a handler test fails, we want to know the failure belongs to HTTP behavior such as decoding, validation, status mapping, or response formatting, rather than to the mathematical implementation inside the service.
+
+Refactor the handler/router dependency only as much as necessary so the calculator service can be replaced by a test double.
+
+Do not introduce unnecessary abstractions. An interface is acceptable here because it has a concrete testing purpose.
+
+2. Add HTTP tests that prove zero is different from a missing field
+
+We explicitly decided that required numeric fields must be validated by presence, not by checking Go zero values.
+
+Therefore, add tests proving that these are valid requests and do not fail required-field validation:
+
+{"base":0,"exponent":2}
+
+{"radicand":0}
+
+{"value":0,"percentage":10}
+
+{"value":100,"percentage":0}
+
+The reason is that zero is a valid numeric value and must not be confused with an omitted key.
+
+3. Add an explicit empty operands test
+
+We already test:
+
+- missing operands
+- one operand
+
+Also add:
+
+{"operands":[]}
+
+and verify it returns the expected insufficient-operands error.
+
+The reason is that an empty array is a different request-shape scenario from a missing key, even if both eventually map to the same domain error.
+
+4. Verify non-finite input handling consistently across service operations
+
+Some service methods already test NaN or infinity inputs, but not every operation does.
+
+Add focused tests so operations that accept arbitrary numeric operands consistently reject non-finite inputs where applicable, especially:
+
+- Add
+- Multiply
+- Divide
+
+Do not duplicate excessive tests if they all use the same shared validation path, but make sure the behavior is clearly covered.
+
+The reason is that our API contract says inputs must be finite real numbers, so the service layer should prove that rule independently from HTTP parsing.
+
+5. Preserve the current separation of responsibilities
+
+Service tests should continue testing mathematical behavior directly with the real calculator service.
+
+Handler tests should focus on:
+
+- JSON decoding
+- required-field validation
+- wrong types
+- unknown fields
+- status-code mapping
+- response format
+- Content-Type
+- HTTP method handling
+
+Do not re-test all mathematical combinations through the HTTP layer once the service is mocked.
+
+The goal is:
+
+- service tests verify math
+- handler tests verify HTTP
+- integration-style coverage is optional, not the primary unit-test strategy
+
+After making the changes, run:
+
+go test ./...
+
+and:
+
+go test -cover ./...
+
+Then report:
+
+- what changed
+- whether handler tests are now isolated from the real service
+- the new coverage percentages
+- any meaningful scenarios that still remain uncovered

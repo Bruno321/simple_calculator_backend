@@ -1,0 +1,27 @@
+Review the current test suite and add the missing unit tests for the uncovered branches shown in the coverage report.
+
+The original requirements already asked to cover:
+
+- valid requests
+- malformed JSON
+- missing mandatory keys
+- wrong value types
+- unknown JSON fields
+- expected HTTP status codes
+- expected JSON response bodies
+
+Make sure every meaningful branch related to those requirements is actually tested, including the currently uncovered validation returns in both the HTTP and service layers.
+
+Also cover the service error cases we explicitly defined, such as:
+
+- non-finite inputs
+- non-representable results
+- exponentiation with no real result
+- negative square root
+- division by zero
+
+Do not change production code unless a real bug is found.
+Do not add meaningless tests just to reach 100% coverage.
+Use the existing test structure and table-driven tests where appropriate.
+
+Afterwards run the tests and coverage again and tell me what remains uncovered.
